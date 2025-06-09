@@ -1,0 +1,77 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <elf.h>
+
+int main(void) {
+
+    int virt_addr = 0x400000;
+    int elf_hdr_size = 64;
+    int prog_hdr_size = 56;
+    int prog_offset = elf_hdr_size + prog_hdr_size;
+
+    Elf64_Ehdr elf_hdr = {
+        .e_ident = {
+            [EI_MAG0]       = ELFMAG0, // magic number
+            [EI_MAG1]       = ELFMAG1,  // magic number
+            [EI_MAG2]       = ELFMAG2,  // magic number
+            [EI_MAG3]       = ELFMAG3,  // magic number
+            [EI_CLASS]      = ELFCLASS64,    // 64-bit
+            [EI_DATA]       = ELFDATA2LSB,    // little endian
+            [EI_VERSION]    = EV_CURRENT,    // version
+            [EI_OSABI]      = 0x0,  // sysv abi
+            [EI_ABIVERSION] = 0x0,  // ignored
+            [EI_PAD]        = 0x0,  // padding
+        },
+        .e_type      = ET_EXEC,   // executable
+        .e_machine   = EM_X86_64, // amd64 isa
+        .e_version   = EV_CURRENT,         // elf version
+        .e_entry     = virt_addr + prog_offset,       // entry point
+        .e_phoff     = elf_hdr_size,      // start of program header table
+        .e_shoff     = 0,       // start of section header table
+        .e_flags     = 0x0,       // ignored
+        .e_ehsize    = elf_hdr_size,        // size of this header
+        .e_phentsize = prog_hdr_size,      // size of program header table entry
+        .e_phnum     = 1,         // # entries in program header table
+        .e_shentsize = 0x40,      // size of section header table entry
+        .e_shnum     = 0,         // # entries in section header table
+        .e_shstrndx  = SHN_UNDEF,         // index of section header table that contains section names
+    };
+
+    Elf64_Phdr prog_hdr = {
+        .p_type   = PT_LOAD,
+        .p_flags  = PF_X + PF_R,
+        .p_offset = prog_offset,
+        .p_vaddr  = virt_addr + prog_offset,
+        .p_paddr  = 0, // ignored
+        .p_filesz = 5,
+        .p_memsz  = 5,
+        .p_align  = 4096,
+    };
+
+    uint8_t sct_text[] = {
+        0xb8, 0x3c, 0x0, 0x0, 0x0, // mov rax, 60
+        0xbf, 0x2d, 0x0, 0x0, 0x0, // mov rdi, 45
+        0x0F, 0x05, // syscall
+    };
+
+    // Elf64_Shdr sct_text_hdr = {
+    //     .sh_name      = 0,
+    //     .sh_type      = SHT_PROGBITS,
+    //     .sh_flags     = SHF_EXECINSTR,
+    //     .sh_addr      = 0,
+    //     .sh_offset    = 0,
+    //     .sh_size      = 0,
+    //     .sh_link      = 0,
+    //     .sh_info      = 0,
+    //     .sh_addralign = 0,
+    //     .sh_entsize   = 0,
+    // };
+
+    FILE *fp = fopen("elf", "wb");
+    fwrite(&elf_hdr, sizeof(uint8_t), sizeof(elf_hdr), fp);
+    fwrite(&prog_hdr, sizeof(uint8_t), sizeof(prog_hdr), fp);
+    fwrite(&sct_text, sizeof(uint8_t), sizeof(sct_text), fp);
+    fclose(fp);
+
+    return 0;
+}
