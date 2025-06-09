@@ -2,15 +2,19 @@
 #include <stdint.h>
 #include <elf.h>
 
+// segment must be page-aligned as the linux kernel can only give out
+// pages with a size of 4096 bytes, and as .text and .data have different
+// permissions, alignment is required
+#define SGM_TEXT_SIZE 4096
+#define SGM_DATA_SIZE 4096
+
 int main(void) {
 
-    int sgm_text_size = 12;
-    int sgm_data_size = 3;
     int virt_addr = 0x400000;
     int elf_hdr_size = 64;
     int prog_hdr_size = 56;
     int text_offset = elf_hdr_size + prog_hdr_size*2;
-    int data_offset = text_offset + sgm_text_size;
+    int data_offset = text_offset + SGM_TEXT_SIZE;
 
     Elf64_Ehdr elf_hdr = {
         .e_ident = {
@@ -46,30 +50,30 @@ int main(void) {
         .p_offset = text_offset,
         .p_vaddr  = virt_addr + text_offset,
         .p_paddr  = 0, // ignored
-        .p_filesz = sgm_text_size,
-        .p_memsz  = sgm_text_size,
+        .p_filesz = SGM_TEXT_SIZE,
+        .p_memsz  = SGM_TEXT_SIZE,
         .p_align  = 4096,
     };
 
     Elf64_Phdr prog_hdr_data = {
         .p_type   = PT_LOAD,
-        .p_flags  = PF_R,
+        .p_flags  = PF_R + PF_W,
         .p_offset = data_offset,
         .p_vaddr  = virt_addr + data_offset,
         .p_paddr  = 0, // ignored
-        .p_filesz = sgm_data_size,
-        .p_memsz  = sgm_data_size,
+        .p_filesz = SGM_DATA_SIZE,
+        .p_memsz  = SGM_DATA_SIZE,
         .p_align  = 4096,
     };
 
-    uint8_t sgm_text[] = {
+    uint8_t sgm_text[SGM_TEXT_SIZE] = {
         0xb8, 0x3c, 0x0, 0x0, 0x0, // mov rax, 60
         0xbf, 0x2d, 0x0, 0x0, 0x0, // mov rdi, 45
         0x0F, 0x05, // syscall
     };
 
-    uint8_t sgm_data[] = {
-        1, 2, 3
+    uint8_t sgm_data[SGM_DATA_SIZE] = {
+        45
     };
 
     FILE *fp = fopen("elf", "wb");
