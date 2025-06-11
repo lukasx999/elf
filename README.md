@@ -1,4 +1,3 @@
 # ELF
 
-<!-- ![Appropriate Imagery](./Elf.jpg) -->
-<img src="./Elf.jpg" width="200" height="200">
+<img src="./elf.jpg" width="300" height="300">
