@@ -77,11 +77,11 @@ int main(void) {
     };
 
     FILE *fp = fopen("elf", "wb");
-    fwrite(&elf_hdr, sizeof(uint8_t), sizeof(elf_hdr), fp);
+    fwrite(&elf_hdr,       sizeof(uint8_t), sizeof(elf_hdr), fp);
     fwrite(&prog_hdr_text, sizeof(uint8_t), sizeof(prog_hdr_text), fp);
     fwrite(&prog_hdr_data, sizeof(uint8_t), sizeof(prog_hdr_data), fp);
-    fwrite(&sgm_text, sizeof(uint8_t), sizeof(sgm_text), fp);
-    fwrite(&sgm_data, sizeof(uint8_t), sizeof(sgm_data), fp);
+    fwrite(&sgm_text,      sizeof(uint8_t), sizeof(sgm_text), fp);
+    fwrite(&sgm_data,      sizeof(uint8_t), sizeof(sgm_data), fp);
     fclose(fp);
 
     return 0;
